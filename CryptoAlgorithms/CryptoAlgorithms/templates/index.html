@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Генерация случайных чисел</title>
+</head>
+<body>
+    <div class="">
+        <canvas id="chart" width="500" height="400"></canvas>
+        <div id="numbers">
+            {% for number in state.numbers %}
+            	<div>
+                    {{ number }}
+                </div>
+            {% endfor %}
+        </div>
+        <div id="generator">
+            {% if not state.generator %}
+                <div>
+                    Генератор не создан
+                </div>
+            {% else %}
+                <div>
+                    {{ state.generator.a }}
+                </div>
+                <div>
+                    {{ state.generator.b }}
+                </div>
+                <div>
+                    {{ state.generator.c_0 }}
+                </div>
+            {% endif %}
+        </div>
+        <div id="control">
+
+            {% if not state.generator %}
+                <a href="/generator/create">Создать генератор</a>
+            {% else %}
+                <a href="/generator/create">Пересоздать генератор</a>
+            {% endif %}
+
+            {% if state.generator %}
+                <a href="/generator/generate">Сгенерировать число</a>
+            {% endif %}
+        </div>
+
+    </div>
+    <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+    <script type="text/javascript">
+        fetch("/chart")
+            .then((response) =>{
+                response.json();
+            })
+            .then((json) =>{
+                const context = document.getElementById("chart").getContext("2d");
+                const _ = new Chart(context, {
+                    type: 'bar',
+                    data: json
+                })
+            })
+            .catch((error) =>{
+                console.log(error)
+            });
+    </script>
+</body>
+</html>
