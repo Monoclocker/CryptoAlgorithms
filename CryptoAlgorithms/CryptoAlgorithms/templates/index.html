@@ -2,60 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Генерация случайных чисел</title>
+
+    <link href="../static/css/styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="">
-        <canvas id="chart" width="500" height="400"></canvas>
-        <div id="numbers">
-            {% for number in state.numbers %}
-            	<div>
-                    {{ number }}
+    <div id="body" class="flex flex-row w-lvw h-lvh">
+        <div id="tabs" class="flex flex-col basis-1/5 bg-gray-300">
+            <a href="/" class="basis-1/5">
+                <div class="bg-black text-white text-center content-center min-h-full text-2xl">
+                    Генератор чисел
                 </div>
-            {% endfor %}
+            </a>
+            <a class="basis-1/5">
+                <div class="text-center content-center min-h-full text-2xl">
+                    DES
+                </div>
+            </a>
         </div>
-        <div id="generator">
-            {% if not state.generator %}
-                <div>
-                    Генератор не создан
+        <div id="main" class="py-4 px-10 flex flex-col gap-4 min-w-[80lvw] bg-gray-300">
+            <div class="flex flex-row justify-start max-h-[300px] gap-5">
+                <canvas id="chart" class="w-150"></canvas>
+                <div id="numbers" class="overflow-y-scroll max-h-[300px] w-40 flex flex-col gap-2">
+                    {% for number in state.numbers %}
+                        <div class="text-center bg-black text-2xl text-white rounded-lg">
+                            {{ number }}
+                        </div>
+                    {% endfor %}
                 </div>
-            {% else %}
-                <div>
-                    {{ state.generator.a }}
+                <div class="flex flex-col">
+                    <div id="generator" class="flex flex-col justify-center align-middle h-[300px]">
+                        {% if not state.generator %}
+                            <div class="text-center">
+                                Генератор не создан
+                            </div>
+                        {% else %}
+                            <div>
+                                a: {{ state.generator.a }}
+                            </div>
+                            <div>
+                                b: {{ state.generator.b }}
+                            </div>
+                            <div>
+                                c0: {{ state.generator.c_0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
                 </div>
-                <div>
-                    {{ state.generator.b }}
-                </div>
-                <div>
-                    {{ state.generator.c_0 }}
-                </div>
-            {% endif %}
+            </div>
+            <div class="flex flex-row gap-5 justify-start">
+                <a href="/generator/create" class="">
+                    <div class="bg-black px-5 py-2.5 text-white rounded-lg">
+                        {% if not state.generator %}
+                            Создать генератор
+                        {% else %}
+                            Пересоздать генератор
+                        {% endif %}
+                    </div>
+                </a>
+                {% if state.generator %}
+                    <a href="/generator/generate">
+                        <div class="bg-black px-5 py-2.5 text-white rounded-lg">
+                            Сгенерировать число
+                        </div>
+                    </a>
+                    <a href="/generator/save">
+                        <div class="bg-black px-5 py-2.5 text-white rounded-lg">
+                            Сохранить ключ
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+            <div>
+                <form action="/generator/load" method="post" enctype="multipart/form-data" class="flex flex-row gap-5">
+                    <input type="file" name="key" class="file:px-5 file:py-2.5 file:bg-black
+                    file:text-white file:mr-4 file:rounded-lg">
+                    <button type="submit" class="bg-black px-5 py-2.5 text-white rounded-lg">Загрузить генератор из файла</button>
+                </form>
+            </div>
+            <div class="flex flex-row gap-5 justify-start">
+                {% if state.generator %}
+                    <form action="/generator/generate-sequence" method="get" enctype="multipart/form-data">
+                        <button class="bg-black px-5 py-2.5 text-white rounded-lg mr-5" type="submit">Сгенерировать</button>
+                        <input type="number" name="count" value="100" class="border-2 rounded-lg">
+                    </form>
+                    {% if state.sequence %}
+                        <a href="generator/download-sequence">
+                            <div class="bg-black px-5 py-2.5 text-white rounded-lg">
+                                Загрузить числа
+                            </div>
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div>
+                <form action="/generator/encrypt" method="post" enctype="multipart/form-data">
+                    <input type="file" name="origin" class="file:px-5 file:py-2.5 file:bg-black
+                        file:text-white file:mr-4 file:rounded-lg">
+                    <button type="submit" class="bg-black px-5 py-2.5 text-white rounded-lg">Зашифровать</button>
+                </form>
+            </div>
+            <div class="flex flex-row gap-5 justify-start">
+                {% if state.encrypted_bytes %}
+                    <a href="generator/download-encrypted">
+                        <div class="bg-black px-5 py-2.5 text-white rounded-lg">
+                            Загрузить зашифрованный файл
+                        </div>
+                    </a>
+                    <span class="content-center">Время последнего шифрования: {{ state.time }} секунд</span>
+                {% endif %}
+            </div>
         </div>
-        <div id="control">
-
-            {% if not state.generator %}
-                <a href="/generator/create">Создать генератор</a>
-            {% else %}
-                <a href="/generator/create">Пересоздать генератор</a>
-            {% endif %}
-
-            {% if state.generator %}
-                <a href="/generator/generate">Сгенерировать число</a>
-            {% endif %}
-        </div>
-
     </div>
-    <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
         fetch("/chart")
             .then((response) =>{
-                response.json();
+                return response.json();
             })
             .then((json) =>{
                 const context = document.getElementById("chart").getContext("2d");
                 const _ = new Chart(context, {
-                    type: 'bar',
-                    data: json
+                    data: {
+                        datasets:[{
+                            type: "bar",
+                            label: "Распределение",
+                            data: json.data,
+                        }, {
+                            type: "line",
+                            label: "Распределение",
+                            data: json.data,
+                        }],
+                        labels: json.labels,
+                    },
+                    options: {
+                        responsive: false,
+                        maintainAspectRatio: false
+                    }
                 })
             })
             .catch((error) =>{
